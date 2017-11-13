@@ -176,8 +176,21 @@ int main(int argc, char** argv) {
 	// Give OpenGL the verticies
 	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 	
+	
 	// Load shaders
 	GLuint programID = LoadShaders("main.vs.glsl", "main.fs.glsl");
+	
+	GLuint viewportLoc = glGetUniformLocation(programID, "viewportDimensions");
+	GLuint boundsLoc = glGetUniformLocation(programID, "bounds");
+	
+	static const GLdouble bounds[] = {
+		-2.0f, 2.0f, -2.0f, 2.0f
+	};
+	
+	static const GLdouble viewportDimensions[] {
+		width, height
+	};
+	
 			
 	// Main loop
 	do {
@@ -200,6 +213,12 @@ int main(int argc, char** argv) {
 		);
 		glDrawArrays(GL_TRIANGLES, 0, 3*2);
 		glDisableVertexAttribArray(0);
+		
+		// Uniforms
+		glUniform2dv(viewportLoc, 1, viewportDimensions);
+		glUniform4dv(boundsLoc, 1, bounds);
+		
+		//Keys
 		
 		// Swap buffers
 		glfwSwapBuffers(window);
