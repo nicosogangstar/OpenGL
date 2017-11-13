@@ -18,6 +18,14 @@
 #define width 1024
 #define height 786
 
+static GLdouble bounds[] = {
+	-2.0f, 2.0f, -2.0f, 2.0f
+};
+
+static GLdouble viewportDimensions[] {
+	width, height
+};
+
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path){
 
 	// Create the shaders
@@ -107,15 +115,34 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
 	return ProgramID;
 }
 
+int zoom(GLfloat rangeModifier) {
+	GLfloat rangeI = bounds[1] - bounds[0];
+	GLfloat newRangeI;
+	newRangeI = rangeI * rangeModifier;
+	GLfloat deltaI = newRangeI - rangeI;
+	bounds[0] -= deltaI / 2;
+	bounds[1] = bounds[0] + newRangeI;
+	
+	GLfloat rangeR = bounds[3] - bounds[2];
+	GLfloat newRangeR;
+	newRangeR = rangeR * rangeModifier;
+	GLfloat deltaR = newRangeR - rangeR;
+	bounds[2] -= deltaR / 2;
+	bounds[3] = bounds[2] + newRangeR;
+}
 
+int pan(GLfloat distI, GLfloat distR) {
+	GLfloat rangeI = bounds[1] - bounds[0];
+	GLfloat rangeR = bounds[3] - bounds[2];
 
+	GLfloat deltaI = (distR / height) * rangeI;
+	GLfloat deltaR = (distI / width) * rangeR;
 
-
-
-
-
-
-
+	bounds[0] += deltaI;
+	bounds[1] += deltaI;
+	bounds[2] -= deltaR;
+	bounds[3] -= deltaR;
+}
 
 int main(int argc, char** argv) {
     // Initialise GLFW
@@ -146,11 +173,6 @@ int main(int argc, char** argv) {
 	}
 	
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-	
-	
-	
-	
-	
 	
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
@@ -183,15 +205,6 @@ int main(int argc, char** argv) {
 	GLuint viewportLoc = glGetUniformLocation(programID, "viewportDimensions");
 	GLuint boundsLoc = glGetUniformLocation(programID, "bounds");
 	
-	static const GLdouble bounds[] = {
-		-2.0f, 2.0f, -2.0f, 2.0f
-	};
-	
-	static const GLdouble viewportDimensions[] {
-		width, height
-	};
-	
-			
 	// Main loop
 	do {
 		// Draw
@@ -218,7 +231,29 @@ int main(int argc, char** argv) {
 		glUniform2dv(viewportLoc, 1, viewportDimensions);
 		glUniform4dv(boundsLoc, 1, bounds);
 		
+		GLfloat zoomSpeed = 0.03f;
+		GLfloat panSpeed = 3.0;
+		
 		//Keys
+		if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
+			zoom(1.0 - zoomSpeed);
+		}
+		if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS){
+			zoom(1.0 + zoomSpeed);
+		}
+		
+		if (glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS){
+			pan(0, panSpeed);
+		}
+		if (glfwGetKey( window, GLFW_KEY_A ) == GLFW_PRESS){
+			pan(panSpeed, 0);
+		}
+		if (glfwGetKey( window, GLFW_KEY_S ) == GLFW_PRESS){
+			pan(0, -panSpeed);
+		}
+		if (glfwGetKey( window, GLFW_KEY_D ) == GLFW_PRESS){
+			pan(-panSpeed, 0);
+		}
 		
 		// Swap buffers
 		glfwSwapBuffers(window);
